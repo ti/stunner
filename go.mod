@@ -83,7 +83,7 @@ require (
 	github.com/pion/sctp v1.9.4 // indirect
 	github.com/pion/sdp/v3 v3.0.18 // indirect
 	github.com/pion/srtp/v3 v3.0.10 // indirect
-	github.com/pion/stun/v3 v3.1.1 // indirect
+	github.com/pion/stun/v3 v3.1.2 // indirect
 	github.com/pion/turn/v4 v4.1.4 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
@@ -124,4 +124,4 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.0 // indirect
 )
 
-replace github.com/pion/turn/v5 => /home/core/Workspace/projects/pion-turn-v5
+replace github.com/pion/turn/v5 => github.com/ti/pion-turn/v5 v5.0.5-0.20260528021930-4312920901e2

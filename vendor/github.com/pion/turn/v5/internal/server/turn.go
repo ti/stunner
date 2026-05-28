@@ -745,20 +745,25 @@ func handleConnectionBindRequest(req Request, stunMsg *stun.Message) error {
 
 // ipMatchesFamily checks if an IP address matches the given address family.
 //
-// PATCHED for stunner on dual-stack/IPv6-only Kubernetes clusters: when the
-// allocation declared family IPv4 (the RFC 6156 default) but the peer is a
-// pure IPv6 address, we still accept it. RFC 6156 strict mode is preserved
-// for the symmetric case (IPv6 alloc with IPv4 peer is still rejected) and
-// for IPv4 peers on IPv4 allocations.
+// Relaxed for dual-stack/IPv6-only hosts: when the allocation declared the
+// RFC 6156 default IPv4 family but the relay socket was bound dual-stack
+// ("udp" wildcard) the v6 peer is reachable through the same allocation,
+// so we accept it. Strict RFC 6156 behavior is preserved for IPv6
+// allocations (a v4 peer is still rejected).
+//
+// Background: browsers' WebRTC TURN clients never set
+// REQUESTED-ADDRESS-FAMILY, so every Allocate is implicitly IPv4 family.
+// On IPv6-only Kubernetes clusters (where backend pod addresses are
+// pure IPv6, e.g. EKS Auto with IPv6 STACK_TYPE) that makes every
+// CreatePermission to a v6 peer fail with errPeerAddressFamilyMismatch
+// even though the relay socket itself is reachable from v6.
 func ipMatchesFamily(ip net.IP, family proto.RequestedAddressFamily) bool {
 	if family == proto.RequestedFamilyIPv4 {
-		// Accept both IPv4 and IPv6 peers; the relay socket binds with the
-		// "udp" wildcard network on Linux dual-stack hosts, which makes both
-		// families reachable through the same allocation.
 		return ip.To4() != nil || (ip.To4() == nil && ip.To16() != nil)
 	}
 	if family == proto.RequestedFamilyIPv6 {
 		return ip.To4() == nil && ip.To16() != nil
 	}
+
 	return false
 }
