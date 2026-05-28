@@ -12,6 +12,7 @@ COPY internal/ internal/
 COPY pkg/ pkg/
 
 COPY cmd/ cmd/
+COPY vendor/ vendor/
 
 COPY .git ./
 COPY Makefile ./

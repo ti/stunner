@@ -91,9 +91,18 @@ func (r *RelayGen) AllocatePacketConn(conf turn.AllocateListenerConfig) (net.Pac
 		requestedPort = 0
 	}
 
-	// This will fail unless (1) r.Address is "" (IPADDR_ANY), or (2) r.Address is IPv4 and the
-	// requested network is also IPv4, or (3) both are IPv6.
-	conn, err := r.Net.ListenPacket(conf.Network, fmt.Sprintf("%s:%d", r.Address, requestedPort))
+	// pion/turn passes a family-pinned Network ("udp4"/"udp6"). On Linux
+	// dual-stack hosts that hint forces a single-family relay socket
+	// regardless of how the listener was bound, breaking IPv6-only
+	// Kubernetes clusters where the RFC 6156 default IPv4 alloc family
+	// can't reach IPv6 backend pods. Override to family-neutral "udp" so
+	// the relay binds [::] dualstack. Filed upstream as l7mp/stunner#226;
+	// pairs with pion/turn#566 to make CreatePermission accept v6 peers.
+	network := conf.Network
+	if r.Address == "" && (network == "udp4" || network == "udp6") {
+		network = "udp"
+	}
+	conn, err := r.Net.ListenPacket(network, fmt.Sprintf("%s:%d", r.Address, requestedPort))
 	if err != nil {
 		return nil, nil, err
 	}
